@@ -11,7 +11,7 @@ use std::{
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use console::style;
-use sugar_cli::{
+use phase_cli::{
     cli::{Cli, CollectionSubcommands, Commands},
     collections::{
         process_remove_collection, process_set_collection, RemoveCollectionArgs, SetCollectionArgs,

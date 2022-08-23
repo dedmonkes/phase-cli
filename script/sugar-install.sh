@@ -73,7 +73,7 @@ echo "$(CYN "1.") 🖥  $(CYN "Downloading distribution")"
 echo ""
 
 # downloads the distribution file
-REMOTE="https://github.com/metaplex-foundation/sugar/releases/latest/download/"
+REMOTE="https://github.com/dedmonkes/phase-cli/releases/latest/download/"
 curl -L $REMOTE$BIN"-"$DIST --output "$SOURCE/$DIST"
 abort_on_error $?
 
