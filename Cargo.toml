@@ -8,7 +8,7 @@ repository = "https://github.com/metaplex-foundation/sugar"
 documentation = "https://docs.metaplex.com/sugar/introduction"
 
 [[bin]]
-name = "sugar"
+name = "phase"
 path = "src/main.rs"
 
 [dependencies]

@@ -24,7 +24,7 @@ abort_on_error() {
     fi
 }
 
-CYN  "🍬 Sugar CLI binary installation script"
+CYN  "Ø Phase CLI binary installation script"
 echo "---------------------------------------"
 echo ""
 
@@ -38,7 +38,7 @@ case "$PROCESSOR" in
     arm* | aarch* | ppc* )
         if [ "$OS_FLAVOUR" != Darwin ]; then
             echo "Binary for $PROCESSOR architecture is not currently supported using this installer. Please follow the instructions at:"
-            echo "  => $(CYN https://github.com/metaplex-foundation/sugar)"
+            echo "  => $(CYN https://github.com/dedmonkes/phase-cli)"
             echo ""
             echo "for details on alternate installation methods."
             exit 1
@@ -80,7 +80,7 @@ abort_on_error $?
 SIZE=$(wc -c "$SOURCE/$DIST" | grep -oE "[0-9]+" | head -n 1)
 
 if [ $SIZE -eq 0 ]; then
-    RED "Aborting: could not download Sugar distribution"
+    RED "Aborting: could not download Phase CLI distribution"
     exit 1
 fi
 
@@ -97,7 +97,7 @@ if [ ! "$(command -v $BIN)" = "" ]; then
     # replace it
     EXISTING="$(which $BIN)"
 
-    echo "Sugar binary was found at:"
+    echo "Phase CLI binary was found at:"
     echo "  => $(CYN $EXISTING)"
     echo ""
     echo -n "$(CYN "Replace it? [Y/n]") (default 'n'): "
@@ -140,7 +140,7 @@ else
             echo "  => adding '$TARGET' to 'PATH' variable in '$ENV_FILE'"
             echo "export PATH=\"$HOME/bin:\$PATH\"" >> "$ENV_FILE"
         else
-            echo "  => adding '$TARGET' to 'PATH' variable to execute 'sugar' from any directory."
+            echo "  => adding '$TARGET' to 'PATH' variable to execute 'phase' from any directory."
             echo "     - file '$(CYN $ENV_FILE)' was not found"
             echo "" 
             echo -n "$(CYN "Would you like to create '$ENV_FILE'? [Y/n]") (default 'n'): "

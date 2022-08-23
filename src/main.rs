@@ -38,7 +38,7 @@ use tracing_subscriber::{self, filter::LevelFilter, prelude::*, EnvFilter};
 fn setup_logging(level: Option<EnvFilter>) -> Result<()> {
     // Log path; change this to be dynamic for multiple OSes.
     // Log in current directory for now.
-    let log_path = PathBuf::from("sugar.log");
+    let log_path = PathBuf::from("phase.log");
 
     let file = OpenOptions::new()
         .write(true)
