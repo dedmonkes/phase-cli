@@ -50,7 +50,7 @@ case "$PROCESSOR" in
         ;;
 esac
  
-BIN="sugar"
+BIN="phase"
 VERSION="ubuntu-latest"
 
 if [ "$OS_FLAVOUR" = Darwin ]; then
