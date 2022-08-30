@@ -1,4 +1,4 @@
-use std::{str::FromStr, thread::sleep, time::Duration, sync::Arc};
+use std::{str::FromStr, sync::Arc, thread::sleep, time::Duration};
 
 pub use anchor_client::solana_sdk::hash::Hash;
 use anchor_client::{
@@ -16,7 +16,7 @@ pub use indicatif::{ProgressBar, ProgressStyle};
 use solana_client::rpc_client::RpcClient;
 use spl_token::state::{Account, Mint};
 
-use crate::{config::data::Cluster, common::PHASE_PROTOCOL_ID};
+use crate::{common::PHASE_PROTOCOL_ID, config::data::Cluster};
 
 /// Hash for devnet cluster
 pub const DEVNET_HASH: &str = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
@@ -139,7 +139,7 @@ pub fn assert_correct_authority(user_keypair: &Pubkey, update_authority: &Pubkey
 
 pub fn get_anchor_account<T: AccountDeserialize>(
     address: &Pubkey,
-    rpc_client: Arc<anchor_client::Client>
+    rpc_client: Arc<anchor_client::Client>,
 ) -> Result<T, anchor_lang::error::Error> {
     let data = rpc_client
         .program(Pubkey::from_str(PHASE_PROTOCOL_ID).unwrap())
