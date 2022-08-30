@@ -18,6 +18,7 @@ use mpl_candy_machine::{
     CollectionPDA, EndSettingType, WhitelistMintMode,
 };
 use mpl_token_metadata::pda::find_collection_authority_account;
+use phase_protocol::state::Roadmap;
 use solana_client::rpc_response::Response;
 use spl_associated_token_account::{
     get_associated_token_address, instruction::create_associated_token_account,
@@ -174,8 +175,7 @@ pub fn mint(
     let program = client.program(CANDY_MACHINE_ID);
     let payer = program.payer();
     let wallet = candy_machine_state.wallet;
-    let authority = candy_machine_state.authority;
-
+    
     let candy_machine_data = &candy_machine_state.data;
 
     let minting_account_record_plugin = find_minting_account_record_plugin(&roadmap);
@@ -239,6 +239,13 @@ pub fn mint(
 
     let nft_mint = Keypair::new();
     let metaplex_program_id = Pubkey::from_str(METAPLEX_PROGRAM_ID)?;
+    
+    let roadmap_account : Roadmap = match get_anchor_account(&roadmap, client){
+        Ok(roadmap) => roadmap,
+        Err(e) => return Err(anyhow!(e)),
+    };
+
+
 
     // Allocate memory for the account
     let min_rent = program
@@ -352,64 +359,73 @@ pub fn mint(
     let master_edition_pda = find_master_edition_pda(&nft_mint.pubkey());
     let (candy_machine_creator_pda, creator_bump) =
         find_candy_machine_creator_pda(&candy_machine_id);
+    
+    let update_authority = Pubkey::find_program_address(
+        &[
+            b"account-governance", 
+            roadmap_account.realm.as_ref(), 
+            metadata_pda.as_ref()
+        ], 
+        &metaplex_program_id,
+    ).0;
 
-    let mut mint_ix = program
-        .request()
-        .accounts(nft_accounts::MintNFT {
-            candy_machine: candy_machine_id,
-            candy_machine_creator: candy_machine_creator_pda,
-            payer,
-            wallet,
-            metadata: metadata_pda,
-            mint: nft_mint.pubkey(),
-            mint_authority: payer,
-            update_authority: payer,
-            master_edition: master_edition_pda,
-            minting_account_record_plugin,
-            token_metadata_program: metaplex_program_id,
-            token_program: TOKEN_PROGRAM_ID,
-            system_program: system_program::id(),
-            rent: sysvar::rent::ID,
-            clock: sysvar::clock::ID,
-            recent_blockhashes: sysvar::recent_blockhashes::ID,
-            instruction_sysvar_account: sysvar::instructions::ID,
-        })
-        .args(nft_instruction::MintNft { creator_bump });
-
-    // Add additional accounts directly to the mint instruction otherwise it won't work.
-    if !additional_accounts.is_empty() {
-        mint_ix = mint_ix.accounts(additional_accounts);
-    }
-    let mint_ix = mint_ix.instructions()?;
-
+  
+ 
     let mut builder = program
         .request()
         .instruction(create_mint_account_ix)
         .instruction(init_mint_ix)
         .instruction(create_assoc_account_ix)
         .instruction(mint_to_ix)
-        .instruction(mint_ix[0].clone())
         .signer(&nft_mint);
 
-    if let Some((collection_pda_pubkey, collection_pda)) = collection_pda_info.as_ref() {
-        let collection_authority_record =
+    builder = match collection_pda_info.as_ref() {
+        Some((collection_pda_pubkey, collection_pda)) => {
+            let collection_authority_record =
             find_collection_authority_account(&collection_pda.mint, collection_pda_pubkey).0;
-        builder = builder
-            .accounts(nft_accounts::SetCollectionDuringMint {
+            builder = builder;
+
+            let mut mint_ix = program
+            .request()
+            .accounts(nft_accounts::MintNFT {
+                roadmap,
                 candy_machine: candy_machine_id,
-                metadata: metadata_pda,
+                candy_machine_creator: candy_machine_creator_pda,
                 payer,
+                wallet,
+                metadata: metadata_pda,
+                mint: nft_mint.pubkey(),
+                mint_authority: payer,
+                update_authority: payer,
+                master_edition: master_edition_pda,
+                minting_account_record_plugin,
+                token_metadata_program: metaplex_program_id,
+                token_program: TOKEN_PROGRAM_ID,
+                system_program: system_program::id(),
+                rent: sysvar::rent::ID,
+                clock: sysvar::clock::ID,
+                recent_blockhashes: sysvar::recent_blockhashes::ID,
+                instruction_sysvar_account: sysvar::instructions::ID,
                 collection_pda: *collection_pda_pubkey,
-                token_metadata_program: mpl_token_metadata::ID,
-                instructions: sysvar::instructions::ID,
                 collection_mint: collection_pda.mint,
                 collection_metadata: find_metadata_pda(&collection_pda.mint),
                 collection_master_edition: find_master_edition_pda(&collection_pda.mint),
-                authority,
+                collection_authority: update_authority,
                 collection_authority_record,
             })
-            .args(nft_instruction::SetCollectionDuringMint {});
-    }
+            .args(nft_instruction::MintNft { creator_bump });
+               // Add additional accounts directly to the mint instruction otherwise it won't work.
+            if !additional_accounts.is_empty() {
+                mint_ix = mint_ix.accounts(additional_accounts);
+            }
+            let mint_ix = mint_ix.instructions()?;
+
+            builder
+            .instruction(mint_ix[0].clone())
+        },
+        None => return Err(anyhow!("Must have a collection set to mint"))
+       
+    };
 
     let sig = builder.send()?;
 
